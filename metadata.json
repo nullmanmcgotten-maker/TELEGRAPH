@@ -1,0 +1,6 @@
+{
+  "name": "TeleGrab",
+  "description": "Download media, files, documents, and videos from Telegram groups and channels with batch selection and download manager.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
