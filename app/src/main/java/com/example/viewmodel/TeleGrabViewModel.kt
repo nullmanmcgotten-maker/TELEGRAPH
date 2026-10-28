@@ -252,22 +252,26 @@ class TeleGrabViewModel(application: Application) : AndroidViewModel(application
     }
 
     // Auth methods
-    fun loginPhone(phone: String, code: String) {
-        repository.loginWithPhone(phone, code)
+    fun loginPhone(phone: String) {
+        val trimmed = phone.trim()
+        if (trimmed.isBlank() || trimmed.filter { it.isDigit() }.length < 4) {
+            showToast("Please enter a valid phone number")
+            return
+        }
+        repository.loginWithPhone(trimmed)
         _currentScreen.value = AppScreen.GROUPS
-        showToast("Logged in successfully to Telegram")
+        showToast("Logged in to Telegram ($trimmed)")
     }
 
     fun loginBotToken(token: String) {
-        repository.loginWithBotToken(token)
+        val trimmed = token.trim()
+        if (trimmed.isBlank()) {
+            showToast("Please enter a Telegram Bot Token")
+            return
+        }
+        repository.loginWithBotToken(trimmed)
         _currentScreen.value = AppScreen.GROUPS
         showToast("Telegram Bot Connected")
-    }
-
-    fun loginDemo() {
-        repository.loginWithDemo()
-        _currentScreen.value = AppScreen.GROUPS
-        showToast("Connected via Telegram Cloud Demo")
     }
 
     fun addPublicChannel(handle: String) {

@@ -118,15 +118,15 @@ fun SettingsScreen(
 
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = currentUser?.displayName ?: "Guest User",
+                        text = if (!currentUser?.phone.isNullOrBlank()) currentUser!!.phone else (currentUser?.displayName ?: "Telegram User"),
                         style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
                     )
                     Text(
-                        text = "@${currentUser?.username ?: "telegrab_user"}",
+                        text = "@${currentUser?.username ?: "tg_user"}",
                         style = MaterialTheme.typography.bodySmall.copy(color = TelegramLightBlue)
                     )
                     Text(
-                        text = "Session: ${currentUser?.sessionType?.label ?: "Disconnected"}",
+                        text = "Status: Connected (${currentUser?.sessionType?.label ?: "Active"})",
                         style = MaterialTheme.typography.bodySmall.copy(color = MaterialTheme.colorScheme.onSurfaceVariant)
                     )
                 }

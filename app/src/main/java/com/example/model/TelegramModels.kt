@@ -1,8 +1,7 @@
 package com.example.model
 
 enum class SessionType(val label: String) {
-    DEMO("Demo Account"),
-    PHONE_SESSION("Phone Account"),
+    PHONE_SESSION("Telegram Account"),
     BOT_TOKEN("Bot Token"),
     PUBLIC_LOOKUP("Public Group/Channel")
 }
@@ -14,7 +13,7 @@ data class TelegramUser(
     val username: String = "",
     val phone: String = "",
     val avatarUrl: String = "",
-    val sessionType: SessionType = SessionType.DEMO,
+    val sessionType: SessionType = SessionType.PHONE_SESSION,
     val isConnected: Boolean = true
 ) {
     val displayName: String

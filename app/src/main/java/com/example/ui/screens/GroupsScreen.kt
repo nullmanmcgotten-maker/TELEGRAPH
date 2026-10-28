@@ -150,7 +150,7 @@ fun GroupsScreen(
                         Column(modifier = Modifier.weight(1f)) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Text(
-                                    text = currentUser!!.displayName,
+                                    text = if (currentUser!!.phone.isNotBlank()) currentUser!!.phone else currentUser!!.displayName,
                                     style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold)
                                 )
                                 Spacer(modifier = Modifier.width(6.dp))

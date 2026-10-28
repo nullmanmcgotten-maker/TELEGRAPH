@@ -13,17 +13,7 @@ import java.util.UUID
 
 class TelegramDataRepository {
 
-    private val _currentUser = MutableStateFlow<TelegramUser?>(
-        TelegramUser(
-            id = 789123456L,
-            firstName = "Alex",
-            lastName = "Vance",
-            username = "alex_downloader",
-            phone = "+1 555 019 2834",
-            avatarUrl = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150",
-            sessionType = SessionType.DEMO
-        )
-    )
+    private val _currentUser = MutableStateFlow<TelegramUser?>(null)
     val currentUser: StateFlow<TelegramUser?> = _currentUser.asStateFlow()
 
     private val sampleGroups = mutableListOf(
@@ -491,14 +481,18 @@ class TelegramDataRepository {
         return mediaItemsDatabase[groupId] ?: emptyList()
     }
 
-    fun loginWithPhone(phoneNumber: String, code: String): Boolean {
+    fun loginWithPhone(phoneNumber: String): Boolean {
+        val cleanNumber = phoneNumber.trim()
+        val digits = cleanNumber.filter { it.isDigit() }
+        val displayPhone = if (cleanNumber.startsWith("+")) cleanNumber else "+$cleanNumber"
+        val suffix = if (digits.length >= 4) digits.takeLast(4) else "user"
         _currentUser.value = TelegramUser(
-            id = Math.abs(phoneNumber.hashCode().toLong()),
+            id = Math.abs(cleanNumber.hashCode().toLong()).coerceAtLeast(100000L),
             firstName = "Telegram User",
             lastName = "",
-            username = "tg_user_${phoneNumber.takeLast(4)}",
-            phone = phoneNumber,
-            avatarUrl = "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150",
+            username = "tg_$suffix",
+            phone = displayPhone,
+            avatarUrl = "",
             sessionType = SessionType.PHONE_SESSION
         )
         return true
@@ -514,18 +508,6 @@ class TelegramDataRepository {
             sessionType = SessionType.BOT_TOKEN
         )
         return true
-    }
-
-    fun loginWithDemo() {
-        _currentUser.value = TelegramUser(
-            id = 789123456L,
-            firstName = "Alex",
-            lastName = "Vance",
-            username = "alex_downloader",
-            phone = "+1 555 019 2834",
-            avatarUrl = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150",
-            sessionType = SessionType.DEMO
-        )
     }
 
     fun addPublicGroupOrChannel(handleOrUrl: String): TelegramGroup {
