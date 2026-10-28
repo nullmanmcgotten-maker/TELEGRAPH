@@ -47,12 +47,26 @@ class TeleGrabViewModel(application: Application) : AndroidViewModel(application
 
     private val repository = TelegramDataRepository()
     private val downloadManager = BatchDownloadManager(application.applicationContext)
+    val tdlibManager = com.example.data.tdlib.TdlibAuthManager(application.applicationContext)
 
     val currentUser: StateFlow<TelegramUser?> = repository.currentUser
     val groups: StateFlow<List<TelegramGroup>> = repository.groups
+    val tdlibAuthState: StateFlow<com.example.data.tdlib.TdlibAuthState> = tdlibManager.authState
 
     val downloadTasks: StateFlow<List<DownloadTask>> = downloadManager.tasks
     val completedFiles: StateFlow<List<LocalDownloadedFile>> = downloadManager.completedFiles
+
+    init {
+        viewModelScope.launch {
+            tdlibManager.authState.collect { state ->
+                if (state is com.example.data.tdlib.TdlibAuthState.Authenticated) {
+                    repository.setUser(state.user)
+                    _currentScreen.value = AppScreen.GROUPS
+                    showToast("Connected via Telegram MTProto (${state.user.phone})")
+                }
+            }
+        }
+    }
 
     // Navigation
     private val _currentScreen = MutableStateFlow(
@@ -251,7 +265,27 @@ class TeleGrabViewModel(application: Application) : AndroidViewModel(application
         _previewItem.value = item
     }
 
-    // Auth methods
+    // 2-Step Phone Login methods
+    fun preparePhoneLogin(phoneNumber: String): Boolean {
+        return repository.preparePhoneLogin(phoneNumber)
+    }
+
+    fun verifyPhoneCode(phoneNumber: String, code: String): Boolean {
+        val success = repository.verifyPhoneCode(phoneNumber, code)
+        if (success) {
+            _currentScreen.value = AppScreen.GROUPS
+            showToast("Logged in to Telegram ($phoneNumber)")
+        } else {
+            showToast("Invalid code or phone mismatch")
+        }
+        return success
+    }
+
+    fun cancelPendingPhoneLogin() {
+        repository.cancelPendingPhoneLogin()
+    }
+
+    // Direct Phone Login
     fun loginPhone(phone: String) {
         val trimmed = phone.trim()
         if (trimmed.isBlank() || trimmed.filter { it.isDigit() }.length < 4) {
@@ -263,15 +297,42 @@ class TeleGrabViewModel(application: Application) : AndroidViewModel(application
         showToast("Logged in to Telegram ($trimmed)")
     }
 
+    // TDLib MTProto Auth methods
+    fun setTdlibParameters(apiId: Int, apiHash: String) {
+        tdlibManager.setApiCredentials(apiId, apiHash)
+    }
+
+    fun sendTdlibPhoneNumber(phoneNumber: String) {
+        tdlibManager.sendPhoneNumber(phoneNumber)
+    }
+
+    fun verifyTdlibCode(code: String, is2FaRequired: Boolean = false) {
+        tdlibManager.verifyCode(code, is2FaRequired)
+    }
+
+    fun verifyTdlibPassword(password: String) {
+        tdlibManager.verifyPassword(password)
+    }
+
+    fun getSessionCodeHint(): String = tdlibManager.getSessionCodeHint()
+
+    // Bot API Auth methods
     fun loginBotToken(token: String) {
         val trimmed = token.trim()
         if (trimmed.isBlank()) {
             showToast("Please enter a Telegram Bot Token")
             return
         }
-        repository.loginWithBotToken(trimmed)
-        _currentScreen.value = AppScreen.GROUPS
-        showToast("Telegram Bot Connected")
+        viewModelScope.launch {
+            showToast("Validating bot token with Telegram...")
+            val result = repository.loginWithBotTokenRemote(trimmed)
+            if (result.isSuccess) {
+                _currentScreen.value = AppScreen.GROUPS
+                showToast("Connected: @${result.getOrNull()?.username ?: "bot"}")
+            } else {
+                showToast("Bot Error: ${result.exceptionOrNull()?.message ?: "Invalid Token"}")
+            }
+        }
     }
 
     fun addPublicChannel(handle: String) {

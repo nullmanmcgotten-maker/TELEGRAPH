@@ -40,4 +40,16 @@ class TeleGrabUnitTest {
         val media = repo.getGroupMedia(group.id)
         assertTrue("Synthetic media generated for public group", media.isNotEmpty())
     }
+
+    @Test
+    fun testTwoStepPhoneLogin() {
+        val repo = TelegramDataRepository()
+        val prepared = repo.preparePhoneLogin("+1 234 567 8900")
+        assertTrue(prepared)
+
+        val verified = repo.verifyPhoneCode("+1 234 567 8900", "12345")
+        assertTrue(verified)
+        assertNotNull(repo.currentUser.value)
+        assertEquals("+1 234 567 8900", repo.currentUser.value?.phone)
+    }
 }

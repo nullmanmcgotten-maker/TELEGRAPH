@@ -42,7 +42,6 @@ credentials = "1.5.0"
 googleid = "1.1.1"
 tdlightJava = "2.15.4"
 
-
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -96,7 +95,6 @@ androidx-credentials = { group = "androidx.credentials", name = "credentials", v
 androidx-credentials-play-services = { group = "androidx.credentials", name = "credentials-play-services-auth", version.ref = "credentials" }
 googleid = { group = "com.google.android.libraries.identity.googleid", name = "googleid", version.ref = "googleid" }
 tdlight-java = { group = "it.tdlight", name = "tdlight-java", version.ref = "tdlightJava" }
-
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
