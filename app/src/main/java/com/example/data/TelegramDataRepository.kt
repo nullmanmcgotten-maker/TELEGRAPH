@@ -16,6 +16,8 @@ class TelegramDataRepository {
     private val _currentUser = MutableStateFlow<TelegramUser?>(null)
     val currentUser: StateFlow<TelegramUser?> = _currentUser.asStateFlow()
 
+    private var pendingPhoneNumber: String? = null
+
     private val sampleGroups = mutableListOf(
         TelegramGroup(
             id = "grp_android_devs",
@@ -41,7 +43,7 @@ class TelegramDataRepository {
             totalMediaCount = 285,
             totalSizeBytes = 8_940_000_000L,
             hasUnreadMedia = true,
-            isPinned = true
+            isPinned = false
         ),
         TelegramGroup(
             id = "grp_tech_books",
@@ -481,6 +483,41 @@ class TelegramDataRepository {
         return mediaItemsDatabase[groupId] ?: emptyList()
     }
 
+    fun preparePhoneLogin(phoneNumber: String): Boolean {
+        val cleanNumber = phoneNumber.trim()
+        val digits = cleanNumber.filter { it.isDigit() }
+        if (cleanNumber.isBlank() || digits.length < 4) return false
+        pendingPhoneNumber = if (cleanNumber.startsWith("+")) cleanNumber else "+$cleanNumber"
+        return true
+    }
+
+    fun verifyPhoneCode(phoneNumber: String, code: String): Boolean {
+        val cleanPhone = phoneNumber.trim()
+        val cleanCode = code.trim()
+        if (pendingPhoneNumber != cleanPhone && pendingPhoneNumber != "+$cleanPhone") return false
+        if (cleanCode.isBlank() || cleanCode.any { !it.isDigit() } || cleanCode.length < 4) return false
+
+        val displayPhone = if (cleanPhone.startsWith("+")) cleanPhone else "+$cleanPhone"
+        val digits = displayPhone.filter { it.isDigit() }
+        val suffix = if (digits.length >= 4) digits.takeLast(4) else "user"
+
+        _currentUser.value = TelegramUser(
+            id = Math.abs(cleanPhone.hashCode().toLong()).coerceAtLeast(100000L),
+            firstName = "Telegram User",
+            lastName = "",
+            username = "tg_$suffix",
+            phone = displayPhone,
+            avatarUrl = "",
+            sessionType = SessionType.PHONE_SESSION
+        )
+        pendingPhoneNumber = null
+        return true
+    }
+
+    fun cancelPendingPhoneLogin() {
+        pendingPhoneNumber = null
+    }
+
     fun loginWithPhone(phoneNumber: String): Boolean {
         val cleanNumber = phoneNumber.trim()
         val digits = cleanNumber.filter { it.isDigit() }
@@ -495,6 +532,7 @@ class TelegramDataRepository {
             avatarUrl = "",
             sessionType = SessionType.PHONE_SESSION
         )
+        pendingPhoneNumber = null
         return true
     }
 
@@ -536,7 +574,6 @@ class TelegramDataRepository {
             isPinned = false
         )
 
-        // Generate synthetic public media for this channel
         val items = listOf(
             TelegramMediaItem(
                 id = "m_${newId}_1",
@@ -615,6 +652,7 @@ class TelegramDataRepository {
     }
 
     fun logout() {
+        pendingPhoneNumber = null
         _currentUser.value = null
     }
 }
